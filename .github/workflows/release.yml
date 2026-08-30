@@ -1,0 +1,154 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  validate-tag:
+    runs-on: windows-latest
+    outputs:
+      tag: ${{ steps.parse.outputs.tag }}
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+    - name: Validate SemVer tag
+      id: parse
+      shell: pwsh
+      run: |
+        $tag = "${{ github.ref_name }}"
+        if ($tag -notmatch '^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') {
+          throw "Tag '$tag' is invalid. Use vMAJOR.MINOR.PATCH (example: v1.0.0)."
+        }
+
+        $version = $tag.Substring(1)
+        "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+  build-plugins:
+    needs: validate-tag
+    runs-on: windows-latest
+    steps:
+    - name: Check out plugin archive
+      uses: actions/checkout@v7
+
+    - name: Check out ACMECertManager (IDnsValidationPlugin host)
+      uses: actions/checkout@v7
+      with:
+        repository: caveman8080/ACMECertManager
+        ref: main
+        path: ACMECertManager
+      # Sibling of src/; same path as a local clone or submodule at ACMECertManager/.
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: "10.0.x"
+
+    - name: Restore
+      run: dotnet restore ACMECertManager.DnsPlugins.sln
+
+    - name: Build, zip, and guard each plugin DLL
+      shell: pwsh
+      run: |
+        $tag = "${{ needs.validate-tag.outputs.tag }}"
+        $dist = Join-Path $PWD "dist"
+        New-Item -ItemType Directory -Force -Path $dist | Out-Null
+
+        $packed = 0
+        foreach ($dir in Get-ChildItem -Path src -Directory) {
+          $name = $dir.Name
+          $csproj = Join-Path $dir.FullName "$name.csproj"
+          if (-not (Test-Path $csproj)) {
+            continue
+          }
+
+          dotnet build $csproj --no-restore -c Release
+          if ($LASTEXITCODE -ne 0) {
+            throw "Build failed for $name"
+          }
+
+          $dll = Join-Path $dir.FullName "bin\Release\net10.0-windows\$name.dll"
+          if (-not (Test-Path $dll)) {
+            throw "Missing plugin DLL: $dll"
+          }
+
+          $stage = Join-Path $env:RUNNER_TEMP "plugin-stage-$name"
+          if (Test-Path $stage) {
+            Remove-Item $stage -Recurse -Force
+          }
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item -Path $dll -Destination (Join-Path $stage "$name.dll")
+
+          $forbidden = @(Get-ChildItem -Path $stage -File | Where-Object {
+            $_.Name -ieq "acm.exe" -or $_.Name -ieq "acm.dll"
+          })
+          if ($forbidden.Count -gt 0) {
+            throw "Refusing to pack host assembly: $($forbidden.Name -join ', ')"
+          }
+
+          $zipName = "$name-$tag.zip"
+          $zipPath = Join-Path $dist $zipName
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
+          }
+          Compress-Archive -Path (Join-Path $stage "$name.dll") -DestinationPath $zipPath -Force
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+          try {
+            $entryNames = @($archive.Entries | ForEach-Object { $_.Name })
+            if ($entryNames -contains "acm.exe" -or $entryNames -contains "acm.dll") {
+              throw "Zip $zipName unexpectedly contains the host assembly."
+            }
+            if ($entryNames -notcontains "$name.dll") {
+              throw "Zip $zipName is missing $name.dll."
+            }
+            if ($archive.Entries.Count -ne 1) {
+              throw "Zip $zipName must contain only $name.dll (found $($archive.Entries.Count) entries)."
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+          $packed++
+          Write-Host "Packed $zipName"
+        }
+
+        if ($packed -lt 1) {
+          throw "No plugin projects were packed under src/."
+        }
+
+    - name: Upload plugin zips
+      uses: actions/upload-artifact@v4
+      with:
+        name: plugin-zips
+        path: dist/*.zip
+        if-no-files-found: error
+
+  publish-release:
+    needs: [validate-tag, build-plugins]
+    runs-on: windows-latest
+    steps:
+    - name: Download plugin zips
+      uses: actions/download-artifact@v4
+      with:
+        name: plugin-zips
+        path: dist
+
+    - name: Publish GitHub Release
+      uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
+      with:
+        tag_name: ${{ needs.validate-tag.outputs.tag }}
+        generate_release_notes: true
+        fail_on_unmatched_files: true
+        files: dist/*.zip
+        body: |
+          Download the zip for the DNS provider you use. Extract the plugin DLL into `ACMECertManager/plugins/` (beside `acm.exe`) and restart ACMECertManager.
+
+          **Plugin contract:** 1 (`IDnsValidationPlugin` as defined on ACMECertManager `main`).
+          **Host app:** https://github.com/caveman8080/ACMECertManager
