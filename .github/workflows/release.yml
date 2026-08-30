@@ -42,7 +42,6 @@ jobs:
     - name: Build, zip, and guard each plugin DLL
       shell: pwsh
       run: |
-        $date = [DateTime]::UtcNow.ToString("yyyyMMdd")
         $dist = Join-Path $PWD "dist"
         New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
@@ -105,15 +104,14 @@ jobs:
             throw "Refusing to pack host assembly: $($forbidden.Name -join ', ')"
           }
 
-          foreach ($zipName in @("$name.zip", "$name-$date.zip")) {
-            $zipPath = Join-Path $dist $zipName
-            if (Test-Path $zipPath) {
-              Remove-Item $zipPath -Force
-            }
-            Compress-Archive -Path $stagedDll -DestinationPath $zipPath -Force
-            Test-PluginZip -ZipPath $zipPath -PluginDllName "$name.dll"
-            Write-Host "Packed $zipName"
+          $zipName = "$name.zip"
+          $zipPath = Join-Path $dist $zipName
+          if (Test-Path $zipPath) {
+            Remove-Item $zipPath -Force
           }
+          Compress-Archive -Path $stagedDll -DestinationPath $zipPath -Force
+          Test-PluginZip -ZipPath $zipPath -PluginDllName "$name.dll"
+          Write-Host "Packed $zipName"
 
           $packed++
         }
@@ -122,7 +120,7 @@ jobs:
           throw "No plugin projects were packed under src/."
         }
 
-        Write-Host "Packed $packed plugin(s) for UTC date $date (stable + dated zip each)."
+        Write-Host "Packed $packed plugin zip(s)."
 
     - name: Upload plugin zips
       uses: actions/upload-artifact@v4
@@ -155,10 +153,7 @@ jobs:
         $notes = @'
         **Plugin contract:** 1 (`IDnsValidationPlugin` as defined on ACMECertManager `main`).
 
-        Download the zip for the DNS provider you use. Extract the plugin DLL into `ACMECertManager/plugins/` (beside `acm.exe`) and restart ACMECertManager.
-
-        - **Current:** `<PluginName>.zip` (overwritten on each publish)
-        - **History:** `<PluginName>-YYYYMMDD.zip` (UTC date of the run; kept on this same release)
+        Download `<PluginName>.zip` for the DNS provider you use (overwritten on each publish). Extract the plugin DLL into `ACMECertManager/plugins/` (beside `acm.exe`) and restart ACMECertManager.
 
         Do not copy `acm.exe` or other host files into `plugins/`. Each zip contains only that plugin's DLL.
 
