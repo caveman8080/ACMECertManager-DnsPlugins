@@ -1,0 +1,58 @@
+name: Plugin request
+description: Request a new DNS-01 plugin for a provider that is not in this archive yet.
+title: "[plugin] "
+labels:
+  - plugin-request
+assignees:
+  - caveman8080
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to request a downloadable DNS-01 plugin.
+
+        Maintainers implement plugins as sibling projects under `src/`, using **contract 1** (`IDnsValidationPlugin`) and **HttpClient only** unless a NuGet package is approved. After a release, drop the plugin DLL into ACMECertManager `plugins/` (beside `acm.exe`).
+
+        Do not paste live API keys, tokens, or passwords.
+  - type: input
+    id: provider-name
+    attributes:
+      label: Provider name
+      description: DNS provider or product to support (for example, Cloudflare or Hurricane Electric DDNS).
+      placeholder: Example: Cloudflare
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Why you need this plugin. If you already use acme.sh, include the dnsapi name (for example `dns_cf` or `dns_he_ddns`).
+      placeholder: Example: I issue certs with acme.sh dns_cf and want the same provider in ACMECertManager.
+    validations:
+      required: true
+  - type: input
+    id: api-docs-url
+    attributes:
+      label: API docs URL
+      description: Link to the provider's DNS or HTTP API documentation (record create/update/delete, auth headers, etc.).
+      placeholder: https://
+    validations:
+      required: true
+  - type: textarea
+    id: required-credentials
+    attributes:
+      label: Required credentials
+      description: Names of the fields a user would enter in ACMECertManager (API token, key, secret, zone, etc.). Describe the fields. Do not paste live secrets.
+      placeholder: |
+        Example:
+        - apiToken (secret, required)
+        - propagationSeconds (optional)
+    validations:
+      required: true
+  - type: textarea
+    id: extra-notes
+    attributes:
+      label: Extra notes
+      description: Zone vs record APIs, known limits, sandbox endpoints, or anything else a maintainer should know. Optional.
+    validations:
+      required: false

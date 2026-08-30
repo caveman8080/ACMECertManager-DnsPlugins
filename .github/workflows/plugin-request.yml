@@ -1,0 +1,31 @@
+name: Plugin request queued
+
+permissions:
+  contents: read
+  issues: write
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  comment:
+    if: >-
+      contains(join(github.event.issue.labels.*.name, ','), 'plugin-request')
+      || startsWith(github.event.issue.title, '[plugin] ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment that the request is queued for review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat <<'EOF'
+          This plugin request is queued for review.
+
+          A maintainer will check the provider, API docs, and credentials against contract 1 (`IDnsValidationPlugin`, HttpClient-only unless a NuGet is approved). If it is a fit, it will be added under `src/` and shipped as a DLL you drop into ACMECertManager `plugins/`.
+
+          Please do not paste live API keys or tokens.
+          EOF
+          )"
