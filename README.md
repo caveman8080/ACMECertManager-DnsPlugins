@@ -19,8 +19,18 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 | Plugin | Release zip | In-app name |
 | --- | --- | --- |
 | [Hurricane Electric DDNS](#hurricane-electric-ddns) | `HurricaneElectricDnsPlugin-vMAJOR.MINOR.PATCH.zip` | Hurricane Electric - DDNS |
+| [Cloudflare](#cloudflare) | `CloudflareDnsPlugin-vMAJOR.MINOR.PATCH.zip` | Cloudflare |
+| [DuckDNS](#duckdns) | `DuckDnsDnsPlugin-vMAJOR.MINOR.PATCH.zip` | DuckDNS |
+| [Porkbun](#porkbun) | `PorkbunDnsPlugin-vMAJOR.MINOR.PATCH.zip` | Porkbun |
+| [DigitalOcean](#digitalocean) | `DigitalOceanDnsPlugin-vMAJOR.MINOR.PATCH.zip` | DigitalOcean |
+| [Hetzner DNS](#hetzner-dns) | `HetznerDnsPlugin-vMAJOR.MINOR.PATCH.zip` | Hetzner DNS |
+| [GoDaddy](#godaddy) | `GoDaddyDnsPlugin-vMAJOR.MINOR.PATCH.zip` | GoDaddy |
+| [Namecheap](#namecheap) | `NamecheapDnsPlugin-vMAJOR.MINOR.PATCH.zip` | Namecheap |
+| [deSEC](#desec) | `DesecDnsPlugin-vMAJOR.MINOR.PATCH.zip` | deSEC |
 
-Additional providers can be added later as sibling projects under `src/`. Cloudflare, Route53, Azure, and other SDK-based providers are out of scope here.
+These plugins talk to each provider over HTTP. AWS Route53, Azure DNS, and Google Cloud DNS are out of scope (they need official SDKs).
+
+Every plugin exposes optional `propagationSeconds` (default 30), same as Hurricane Electric. Credentials are stored by the host app in plaintext (`storage/dns-secrets.json`).
 
 ## Plugin contract
 
@@ -64,7 +74,121 @@ Credentials (entered in ACMECertManager):
 - `ddnsKey` — Hurricane Electric DDNS key (required)
 - `propagationSeconds` — optional wait before ACME validation (default 30)
 
-This plugin targets HE DDNS, not the dns.he.net zone-edit form API. Credentials are stored by the host app in plaintext (`storage/dns-secrets.json`).
+This plugin targets HE DDNS, not the dns.he.net zone-edit form API.
+
+## Cloudflare
+
+Follows `acme.sh` `dns_cf.sh` against `https://api.cloudflare.com/client/v4`:
+
+- Authenticate with `Authorization: Bearer` (API token only; not Global API Key + email)
+- Optional Zone ID; otherwise list zones by name until the record's zone is found
+- Present: `POST /zones/{id}/dns_records` TXT TTL 120 (identical-record errors are success)
+- Cleanup: find the TXT by name + content, then `DELETE /zones/{id}/dns_records/{recordId}`
+
+Credentials:
+
+- `apiToken` — Cloudflare API token with Zone.DNS Edit (required). Zone.Zone Read is needed if Zone ID is blank
+- `zoneId` — optional Cloudflare zone identifier
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+## DuckDNS
+
+Follows `acme.sh` `dns_duckdns.sh` against `https://www.duckdns.org/update`:
+
+- Present: `GET` with `domains`, `token`, and `txt`
+- Cleanup: `GET` with `txt=` and `clear=true` (DuckDNS has one TXT slot per domain)
+- The DuckDNS subdomain is taken from the record name (`*.duckdns.org`)
+
+Credentials:
+
+- `token` — DuckDNS account token (required)
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+## Porkbun
+
+Follows `acme.sh` `dns_porkbun.sh` against `https://api.porkbun.com/api/json/v3`:
+
+- Auth fields `apikey` and `secretapikey` on every JSON POST
+- Detect the zone with `dns/retrieve/{domain}`
+- Present: `dns/create/{domain}` TXT TTL 120
+- Cleanup: match the TXT in the retrieve list, then `dns/delete/{domain}/{id}`
+
+Credentials:
+
+- `apiKey` — Porkbun API key (required)
+- `apiSecret` — Porkbun secret API key (required)
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+## DigitalOcean
+
+Follows `acme.sh` `dns_dgon.sh` against `https://api.digitalocean.com/v2`:
+
+- Authenticate with `Authorization: Bearer`
+- Detect the zone with `GET /domains/{name}`
+- Present: `POST /domains/{zone}/records` TXT TTL 120
+- Cleanup: list records (including extra pages) and `DELETE` the matching TXT
+
+Credentials:
+
+- `apiToken` — DigitalOcean personal access token (required)
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+## Hetzner DNS
+
+Follows `acme.sh` `dns_hetzner.sh` against the console DNS API `https://dns.hetzner.com/api/v1` (not Hetzner Cloud DNS):
+
+- Authenticate with `Auth-API-Token`
+- Detect the zone with `GET /zones?name=`
+- Present: `POST /records` TXT TTL 120 if that name/value is not already there
+- Cleanup: `DELETE /records/{id}`
+
+Credentials:
+
+- `apiToken` — Hetzner DNS API token (required)
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+## GoDaddy
+
+Follows `acme.sh` `dns_gd.sh` against `https://api.godaddy.com/v1`:
+
+- Authenticate with `Authorization: sso-key {key}:{secret}`
+- Detect the zone by probing `GET /domains/{zone}/records/TXT/{name}` (JSON array) or `GET /domains/{zone}`
+- Present: read existing TXT values for the name, then `PUT` the merged list
+- Cleanup: `PUT` the remaining values, or `DELETE` the name if that was the last TXT
+
+Credentials:
+
+- `apiKey` — GoDaddy API key (required)
+- `apiSecret` — GoDaddy API secret (required)
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+## Namecheap
+
+Follows `acme.sh` `dns_namecheap.sh` against `https://api.namecheap.com/xml.response`.
+
+Namecheap `setHosts` **replaces the whole host list**. The plugin reads every existing host with `domains.dns.getHosts`, then writes the full list back with the challenge TXT added or removed.
+
+Credentials:
+
+- `apiUser` — Namecheap API user (required)
+- `apiKey` — Namecheap API key (required)
+- `clientIp` — IPv4 that Namecheap has allowlisted, or a URL that returns that IPv4. Optional; if blank the plugin fetches `https://api.ipify.org`
+- `propagationSeconds` — optional wait before ACME validation (default 30)
+
+Enable API access in the Namecheap account and allowlist the client IP.
+
+## deSEC
+
+Follows `acme.sh` `dns_desec.sh` against `https://desec.io/api/v1/domains`:
+
+- Authenticate with `Authorization: Token`
+- Detect the zone from `GET /domains/`
+- Present/cleanup: `PUT /domains/{zone}/rrsets/` with the merged TXT RRset (TTL 3600)
+
+Credentials:
+
+- `apiToken` — deSEC API token (`DEDYN_TOKEN`) (required)
+- `propagationSeconds` — optional wait before ACME validation (default 30)
 
 ## Build from source
 
@@ -96,11 +220,11 @@ git submodule add https://github.com/caveman8080/ACMECertManager.git ACMECertMan
 dotnet build ACMECertManager.DnsPlugins.sln -c Release
 ```
 
-Minimum SDK/runtime: .NET 10 (`net10.0-windows`). After a Release build, copy `src/HurricaneElectricDnsPlugin/bin/Release/net10.0-windows/HurricaneElectricDnsPlugin.dll` into `plugins/`. Do not copy `acm.exe`.
+Minimum SDK/runtime: .NET 10 (`net10.0-windows`). After a Release build, copy each `src/<Name>DnsPlugin/bin/Release/net10.0-windows/<Name>DnsPlugin.dll` into `plugins/`. Do not copy `acm.exe`.
 
 ## Releases
 
-Push a tag `vMAJOR.MINOR.PATCH` (for example `v1.0.0`). GitHub Actions builds each plugin and uploads one zip per plugin. The zip contains only that plugin's DLL.
+Push a tag `vMAJOR.MINOR.PATCH` (for example `v1.0.0`). GitHub Actions builds each plugin under `src/` and uploads one zip per plugin. The zip contains only that plugin's DLL.
 
 ## License
 
