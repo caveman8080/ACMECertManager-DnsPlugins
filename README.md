@@ -22,6 +22,10 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 
 Additional providers can be added later as sibling projects under `src/`. Cloudflare, Route53, Azure, and other SDK-based providers are out of scope here.
 
+## Request a plugin
+
+Missing a DNS provider? Open a [plugin request](https://github.com/caveman8080/ACMECertManager-DnsPlugins/issues/new?template=plugin-request.yml) issue. See [CONTRIBUTING.md](CONTRIBUTING.md) for the request form and how maintainers add a plugin under `src/`.
+
 ## Plugin contract
 
 ACMECertManager discovers plugins with `typeof(IDnsValidationPlugin).IsAssignableFrom` on `*.dll` files in `plugins/`. That type lives in the **app assembly** (`src/DnsPlugins.cs`, namespace `ACMECertManager`). A second copy of the interface in a plugin assembly will not load.
