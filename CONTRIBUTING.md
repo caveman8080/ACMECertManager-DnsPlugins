@@ -15,7 +15,7 @@ The form prefixes the title with `[plugin] `, applies the `plugin-request` label
 1. Create a sibling project `src/<Name>DnsPlugin/` whose folder name matches the `.csproj` (CI packs `src/<Name>DnsPlugin/<Name>DnsPlugin.csproj`).
 2. Implement **contract 1** (`IDnsValidationPlugin` on ACMECertManager `main`). `ProjectReference` `ACMECertManager/src/ACMECertManager.csproj`. Do not copy or redefine the interface in the plugin assembly.
 3. Call the provider with `HttpClient` only. Add a NuGet package only after a maintainer approves that SDK. Route53, Azure DNS, and similar SDK-only providers stay out of scope until then.
-4. Add the project to `ACMECertManager.DnsPlugins.sln` and document it in `README.md`.
+4. Add the project to `ACMECertManager.DnsPlugins.sln`, add a page under `docs/`, and link it from the plugin list in [README.md](README.md).
 5. Build Release, then drop **only** that plugin DLL into ACMECertManager `plugins/` (the folder beside `acm.exe`). Do not copy `acm.exe` or other host files.
 
 Contract 1 and the install path are documented in [README.md](README.md).
