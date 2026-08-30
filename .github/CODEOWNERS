@@ -1,0 +1,8 @@
+# Default owners for everything
+*       @caveman8080
+
+# .NET plugin sources
+*.cs    @caveman8080
+
+# CI / build files
+.github/workflows/   @caveman8080
