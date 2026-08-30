@@ -1,7 +1,7 @@
 # Hetzner DNS
 
 In-app name: **Hetzner DNS**  
-Release zip: `HetznerDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `HetznerDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_hetzner.sh` against the console DNS API `https://dns.hetzner.com/api/v1` (not Hetzner Cloud DNS):
 

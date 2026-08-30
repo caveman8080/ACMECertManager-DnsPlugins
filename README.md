@@ -7,7 +7,7 @@ ACMECertManager loads provider DLLs from `plugins/` next to `acm.exe`. This repo
 ## Install (download and drop)
 
 1. Install [ACMECertManager](https://github.com/caveman8080/ACMECertManager/releases).
-2. Open this repo's [Releases](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases) and download the zip for the plugin you want.
+2. Open this repo's [v1 (Contract 1 plugins) release](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1) and download the zip for the plugin you want (`<PluginName>.zip` is the current build).
 3. Extract the plugin DLL into `ACMECertManager/plugins/` (the folder beside `acm.exe`).
 4. Restart ACMECertManager.
 5. Issue a certificate with **DNS-01 (plugin)** and select the provider.
@@ -94,7 +94,16 @@ Minimum SDK/runtime: .NET 10 (`net10.0-windows`). After a Release build, copy ea
 
 ## Releases
 
-Push a tag `vMAJOR.MINOR.PATCH` (for example `v1.0.0`). GitHub Actions builds each plugin under `src/` and uploads one zip per plugin. The zip contains only that plugin's DLL.
+Plugins ship from a single floating GitHub Release tagged **[v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1)** ("Contract 1 plugins"). `v1` is the **IDnsValidationPlugin contract**, not a catalog version. There is no `v1.2.3` tag per plugin update.
+
+Merging changes under `src/` (or this release workflow) to `main` rebuilds every plugin and updates that release in place:
+
+- **Current:** `<PluginName>.zip` (overwritten on each run)
+- **History:** `<PluginName>-YYYYMMDD.zip` (UTC date of the run; kept on the same `v1` release)
+
+Each zip contains only that plugin's DLL. Download the zip you need, drop the DLL in `plugins/` next to `acm.exe`, and restart.
+
+Do not push a SemVer tag to ship a plugin. Users should always grab the current zips from the `v1` release. A `v2` release is only minted if the host interface breaks.
 
 ## License
 

@@ -1,7 +1,7 @@
 # DigitalOcean
 
 In-app name: **DigitalOcean**  
-Release zip: `DigitalOceanDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `DigitalOceanDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_dgon.sh` against `https://api.digitalocean.com/v2`:
 

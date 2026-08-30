@@ -1,7 +1,7 @@
 # Cloudflare
 
 In-app name: **Cloudflare**  
-Release zip: `CloudflareDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `CloudflareDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_cf.sh` against `https://api.cloudflare.com/client/v4`:
 

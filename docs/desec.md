@@ -1,7 +1,7 @@
 # deSEC
 
 In-app name: **deSEC**  
-Release zip: `DesecDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `DesecDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_desec.sh` against `https://desec.io/api/v1/domains`:
 

@@ -1,7 +1,7 @@
 # Hurricane Electric DDNS
 
 In-app name: **Hurricane Electric - DDNS**  
-Release zip: `HurricaneElectricDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `HurricaneElectricDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Ported from the ACMECertManager sample (`samples/HurricaneElectricDnsPlugin`). It follows the same high-level flow as `acme.sh` `dns_he_ddns.sh`:
 
