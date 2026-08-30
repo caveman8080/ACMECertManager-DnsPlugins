@@ -25,6 +25,14 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 - [GoDaddy](docs/godaddy.md)
 - [Namecheap](docs/namecheap.md)
 - [deSEC](docs/desec.md)
+- [Dynu](docs/dynu.md)
+- [Gandi LiveDNS](docs/gandi.md)
+- [Linode](docs/linode.md)
+- [Vultr](docs/vultr.md)
+- [DNSimple](docs/dnsimple.md)
+- [LuaDNS](docs/luadns.md)
+- [Bunny.net DNS](docs/bunny.md)
+- [ClouDNS](docs/cloudns.md)
 
 These plugins talk to each provider over HTTP. AWS Route53, Azure DNS, and Google Cloud DNS are out of scope (they need official SDKs).
 
