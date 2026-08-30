@@ -1,7 +1,7 @@
 # Namecheap
 
 In-app name: **Namecheap**  
-Release zip: `NamecheapDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `NamecheapDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_namecheap.sh` against `https://api.namecheap.com/xml.response`.
 

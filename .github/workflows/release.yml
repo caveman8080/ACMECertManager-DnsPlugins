@@ -3,33 +3,21 @@ name: Release
 permissions:
   contents: write
 
+concurrency:
+  group: dns-plugins-v1-release
+  cancel-in-progress: false
+
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - ".github/workflows/release.yml"
 
 jobs:
-  validate-tag:
-    runs-on: windows-latest
-    outputs:
-      tag: ${{ steps.parse.outputs.tag }}
-      version: ${{ steps.parse.outputs.version }}
-    steps:
-    - name: Validate SemVer tag
-      id: parse
-      shell: pwsh
-      run: |
-        $tag = "${{ github.ref_name }}"
-        if ($tag -notmatch '^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') {
-          throw "Tag '$tag' is invalid. Use vMAJOR.MINOR.PATCH (example: v1.0.0)."
-        }
-
-        $version = $tag.Substring(1)
-        "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-        "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
   build-plugins:
-    needs: validate-tag
     runs-on: windows-latest
     steps:
     - name: Check out plugin archive
@@ -54,9 +42,35 @@ jobs:
     - name: Build, zip, and guard each plugin DLL
       shell: pwsh
       run: |
-        $tag = "${{ needs.validate-tag.outputs.tag }}"
+        $date = [DateTime]::UtcNow.ToString("yyyyMMdd")
         $dist = Join-Path $PWD "dist"
         New-Item -ItemType Directory -Force -Path $dist | Out-Null
+
+        function Test-PluginZip {
+          param(
+            [Parameter(Mandatory = $true)][string]$ZipPath,
+            [Parameter(Mandatory = $true)][string]$PluginDllName
+          )
+
+          $zipName = Split-Path -Path $ZipPath -Leaf
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+          try {
+            $entryNames = @($archive.Entries | ForEach-Object { $_.Name })
+            if ($entryNames -contains "acm.exe" -or $entryNames -contains "acm.dll") {
+              throw "Zip $zipName unexpectedly contains the host assembly."
+            }
+            if ($entryNames -notcontains $PluginDllName) {
+              throw "Zip $zipName is missing $PluginDllName."
+            }
+            if ($archive.Entries.Count -ne 1) {
+              throw "Zip $zipName must contain only $PluginDllName (found $($archive.Entries.Count) entries)."
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+        }
 
         $packed = 0
         foreach ($dir in Get-ChildItem -Path src -Directory) {
@@ -81,7 +95,8 @@ jobs:
             Remove-Item $stage -Recurse -Force
           }
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item -Path $dll -Destination (Join-Path $stage "$name.dll")
+          $stagedDll = Join-Path $stage "$name.dll"
+          Copy-Item -Path $dll -Destination $stagedDll
 
           $forbidden = @(Get-ChildItem -Path $stage -File | Where-Object {
             $_.Name -ieq "acm.exe" -or $_.Name -ieq "acm.dll"
@@ -90,38 +105,24 @@ jobs:
             throw "Refusing to pack host assembly: $($forbidden.Name -join ', ')"
           }
 
-          $zipName = "$name-$tag.zip"
-          $zipPath = Join-Path $dist $zipName
-          if (Test-Path $zipPath) {
-            Remove-Item $zipPath -Force
-          }
-          Compress-Archive -Path (Join-Path $stage "$name.dll") -DestinationPath $zipPath -Force
-
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
-          try {
-            $entryNames = @($archive.Entries | ForEach-Object { $_.Name })
-            if ($entryNames -contains "acm.exe" -or $entryNames -contains "acm.dll") {
-              throw "Zip $zipName unexpectedly contains the host assembly."
+          foreach ($zipName in @("$name.zip", "$name-$date.zip")) {
+            $zipPath = Join-Path $dist $zipName
+            if (Test-Path $zipPath) {
+              Remove-Item $zipPath -Force
             }
-            if ($entryNames -notcontains "$name.dll") {
-              throw "Zip $zipName is missing $name.dll."
-            }
-            if ($archive.Entries.Count -ne 1) {
-              throw "Zip $zipName must contain only $name.dll (found $($archive.Entries.Count) entries)."
-            }
-          }
-          finally {
-            $archive.Dispose()
+            Compress-Archive -Path $stagedDll -DestinationPath $zipPath -Force
+            Test-PluginZip -ZipPath $zipPath -PluginDllName "$name.dll"
+            Write-Host "Packed $zipName"
           }
 
           $packed++
-          Write-Host "Packed $zipName"
         }
 
         if ($packed -lt 1) {
           throw "No plugin projects were packed under src/."
         }
+
+        Write-Host "Packed $packed plugin(s) for UTC date $date (stable + dated zip each)."
 
     - name: Upload plugin zips
       uses: actions/upload-artifact@v4
@@ -131,7 +132,7 @@ jobs:
         if-no-files-found: error
 
   publish-release:
-    needs: [validate-tag, build-plugins]
+    needs: [build-plugins]
     runs-on: windows-latest
     steps:
     - name: Download plugin zips
@@ -140,15 +141,59 @@ jobs:
         name: plugin-zips
         path: dist
 
-    - name: Publish GitHub Release
-      uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
-      with:
-        tag_name: ${{ needs.validate-tag.outputs.tag }}
-        generate_release_notes: true
-        fail_on_unmatched_files: true
-        files: dist/*.zip
-        body: |
-          Download the zip for the DNS provider you use. Extract the plugin DLL into `ACMECertManager/plugins/` (beside `acm.exe`) and restart ACMECertManager.
+    - name: Publish or update the floating v1 GitHub Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_REPO: ${{ github.repository }}
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = "Stop"
+        $PSNativeCommandUseErrorActionPreference = $false
 
-          **Plugin contract:** 1 (`IDnsValidationPlugin` as defined on ACMECertManager `main`).
-          **Host app:** https://github.com/caveman8080/ACMECertManager
+        $tag = "v1"
+        $title = "Contract 1 plugins"
+        $notes = @'
+        **Plugin contract:** 1 (`IDnsValidationPlugin` as defined on ACMECertManager `main`).
+
+        Download the zip for the DNS provider you use. Extract the plugin DLL into `ACMECertManager/plugins/` (beside `acm.exe`) and restart ACMECertManager.
+
+        - **Current:** `<PluginName>.zip` (overwritten on each publish)
+        - **History:** `<PluginName>-YYYYMMDD.zip` (UTC date of the run; kept on this same release)
+
+        Do not copy `acm.exe` or other host files into `plugins/`. Each zip contains only that plugin's DLL.
+
+        Provider setup: [docs/](https://github.com/caveman8080/ACMECertManager-DnsPlugins/tree/main/docs).
+        **Host app:** https://github.com/caveman8080/ACMECertManager
+
+        This `v1` release is updated in place. A `v2` tag is only minted if the host interface breaks.
+        '@
+        $notes = $notes.Trim()
+
+        $notesFile = Join-Path $env:RUNNER_TEMP "release-notes.md"
+        [System.IO.File]::WriteAllText($notesFile, $notes + [Environment]::NewLine)
+
+        $zips = @(Get-ChildItem -Path dist -Filter *.zip)
+        if ($zips.Count -lt 1) {
+          throw "No plugin zips in dist/."
+        }
+
+        gh release view $tag --json tagName 2>&1 | Out-Null
+        $releaseExists = ($LASTEXITCODE -eq 0)
+
+        if ($releaseExists) {
+          gh release edit $tag --title $title --notes-file $notesFile
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to update GitHub Release $tag."
+          }
+        }
+        else {
+          gh release create $tag --title $title --notes-file $notesFile --latest --target $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to create GitHub Release $tag."
+          }
+        }
+
+        gh release upload $tag --clobber -- $($zips.FullName)
+        if ($LASTEXITCODE -ne 0) {
+          throw "Failed to upload plugin zips to GitHub Release $tag."
+        }

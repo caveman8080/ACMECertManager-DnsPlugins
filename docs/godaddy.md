@@ -1,7 +1,7 @@
 # GoDaddy
 
 In-app name: **GoDaddy**  
-Release zip: `GoDaddyDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `GoDaddyDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_gd.sh` against `https://api.godaddy.com/v1`:
 

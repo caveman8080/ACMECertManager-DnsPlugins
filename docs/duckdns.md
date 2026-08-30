@@ -1,7 +1,7 @@
 # DuckDNS
 
 In-app name: **DuckDNS**  
-Release zip: `DuckDnsDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `DuckDnsDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_duckdns.sh` against `https://www.duckdns.org/update`:
 

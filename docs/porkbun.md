@@ -1,7 +1,7 @@
 # Porkbun
 
 In-app name: **Porkbun**  
-Release zip: `PorkbunDnsPlugin-vMAJOR.MINOR.PATCH.zip`
+Release zip: `PorkbunDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
 Follows `acme.sh` `dns_porkbun.sh` against `https://api.porkbun.com/api/json/v3`:
 
