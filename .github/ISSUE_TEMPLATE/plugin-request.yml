@@ -27,15 +27,15 @@ body:
     attributes:
       label: Why
       description: Why you need this plugin. If you already use acme.sh, include the dnsapi name (for example `dns_cf` or `dns_he_ddns`).
-      placeholder: Example: I issue certs with acme.sh dns_cf and want the same provider in ACMECertManager.
+      placeholder: "Example: I issue certs with acme.sh dns_cf and want the same provider in ACMECertManager."
     validations:
       required: true
   - type: input
     id: api-docs-url
     attributes:
       label: API docs URL
-      description: Link to the provider's DNS or HTTP API documentation (record create/update/delete, auth headers, etc.).
-      placeholder: https://
+      description: Link to the provider DNS or HTTP API documentation (record create/update/delete, auth headers, etc.).
+      placeholder: "https://"
     validations:
       required: true
   - type: textarea
