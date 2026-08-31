@@ -19,7 +19,7 @@ body:
     attributes:
       label: Provider name
       description: DNS provider or product to support (for example, Cloudflare or Hurricane Electric DDNS).
-      placeholder: Example: Cloudflare
+      placeholder: "Example: Cloudflare"
     validations:
       required: true
   - type: textarea
