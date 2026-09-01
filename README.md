@@ -33,6 +33,11 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 - [LuaDNS](docs/luadns.md)
 - [Bunny.net DNS](docs/bunny.md)
 - [ClouDNS](docs/cloudns.md)
+- [OVH](docs/ovh.md)
+- [Name.com](docs/namecom.md)
+- [DNS Made Easy](docs/dns-made-easy.md)
+- [Scaleway](docs/scaleway.md)
+- [IONOS](docs/ionos.md)
 
 These plugins talk to each provider over HTTP. AWS Route53, Azure DNS, and Google Cloud DNS are out of scope (they need official SDKs).
 
