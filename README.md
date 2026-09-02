@@ -38,6 +38,11 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 - [DNS Made Easy](docs/dns-made-easy.md)
 - [Scaleway](docs/scaleway.md)
 - [IONOS](docs/ionos.md)
+- [Infomaniak](docs/infomaniak.md)
+- [NS1](docs/ns1.md)
+- [DreamHost](docs/dreamhost.md)
+- [EasyDNS](docs/easydns.md)
+- [Mythic Beasts](docs/mythic-beasts.md)
 
 These plugins talk to each provider over HTTP. AWS Route53, Azure DNS, and Google Cloud DNS are out of scope (they need official SDKs).
 
