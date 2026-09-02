@@ -94,8 +94,12 @@ public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
             payload,
             cancellationToken).ConfigureAwait(false);
 
-        if (HasStatus(body, 201) ||
-            body.Contains("Record already exists", StringComparison.OrdinalIgnoreCase))
+        if (status is >= 200 and < 300)
+        {
+            return;
+        }
+
+        if (body.Contains("Record already exists", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }

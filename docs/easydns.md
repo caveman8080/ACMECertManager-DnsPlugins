@@ -7,7 +7,7 @@ Follows `acme.sh` `dns_easydns.sh` against `https://rest.easydns.net`:
 
 - Authenticate with HTTP Basic (`token:key`)
 - Detect the zone by probing `GET /zones/records/all/{name}` (`"status":200`)
-- Present: `PUT /zones/records/add/{zone}/TXT` (`host` + `rdata`) if that name/value is not already there (`"status":201` or already exists)
+- Present: `PUT /zones/records/add/{zone}/TXT` (`host` + `rdata`) if that name/value is not already there (HTTP 2xx, or already exists)
 - Cleanup: `GET /zones/records/all/{zone}/search/{host}`, then `DELETE /zones/records/{zone}/{recordId}`
 
 Credentials:

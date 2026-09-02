@@ -50,7 +50,7 @@ public sealed class EasyDnsDnsValidationPluginTests
                 path.Contains("/zones/records/add/example.com/TXT", StringComparison.Ordinal))
             {
                 recordId = "99";
-                return HttpStub.Json(HttpStatusCode.Created, """{"status":201}""");
+                return HttpStub.Json(HttpStatusCode.OK, """{"msg":"ok"}""");
             }
 
             if (request.Method == HttpMethod.Delete &&
@@ -68,6 +68,41 @@ public sealed class EasyDnsDnsValidationPluginTests
 
         await plugin.PresentChallengeAsync(challenge, Credentials, CancellationToken.None);
         await plugin.CleanupChallengeAsync(challenge, Credentials, CancellationToken.None);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK)]
+    [InlineData(HttpStatusCode.Created)]
+    [InlineData(HttpStatusCode.NoContent)]
+    public async Task PresentChallengeAsync_Http2xxWithoutBodyStatus201_Succeeds(HttpStatusCode status)
+    {
+        using var http = HttpStub.Client(request =>
+        {
+            var path = HttpStub.Path(request);
+
+            if (request.Method == HttpMethod.Get &&
+                path.Contains("/zones/records/all/example.com", StringComparison.Ordinal))
+            {
+                return HttpStub.Json(HttpStatusCode.OK, """{"status":200,"data":[]}""");
+            }
+
+            if (request.Method == HttpMethod.Get &&
+                path.Contains("/zones/records/all/", StringComparison.Ordinal))
+            {
+                return HttpStub.Json(HttpStatusCode.NotFound, """{"status":404}""");
+            }
+
+            if (request.Method == HttpMethod.Put &&
+                path.Contains("/zones/records/add/example.com/TXT", StringComparison.Ordinal))
+            {
+                return HttpStub.Json(status, """{"msg":"ok"}""");
+            }
+
+            throw new InvalidOperationException($"Unexpected request: {request.Method} {HttpStub.Url(request)}");
+        });
+
+        var plugin = new EasyDnsDnsValidationPlugin(http);
+        await plugin.PresentChallengeAsync(HttpStub.Challenge(), Credentials, CancellationToken.None);
     }
 
     [Theory]
