@@ -9,10 +9,23 @@ namespace DreamHostDnsPlugin;
 public sealed class DreamHostDnsValidationPlugin : IDnsValidationPlugin
 {
     private const string ApiBase = "https://api.dreamhost.com/";
-    private static readonly HttpClient HttpClient = new()
+    private static readonly HttpClient SharedHttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(30)
     };
+
+    private readonly HttpClient _httpClient;
+
+    public DreamHostDnsValidationPlugin()
+        : this(SharedHttpClient)
+    {
+    }
+
+    public DreamHostDnsValidationPlugin(HttpClient httpClient)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
+    }
 
     public DnsPluginMetadata Metadata => new()
     {
@@ -94,7 +107,7 @@ public sealed class DreamHostDnsValidationPlugin : IDnsValidationPlugin
         }
     }
 
-    private static async Task<(int Status, string Body)> CallAsync(
+    private async Task<(int Status, string Body)> CallAsync(
         string apiKey,
         string command,
         string recordName,
@@ -113,7 +126,7 @@ public sealed class DreamHostDnsValidationPlugin : IDnsValidationPlugin
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         request.Headers.TryAddWithoutValidation("User-Agent", "ACMECertManager-DreamHostDnsPlugin");
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return ((int)response.StatusCode, body);
     }

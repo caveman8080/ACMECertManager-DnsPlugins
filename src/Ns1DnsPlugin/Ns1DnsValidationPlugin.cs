@@ -10,10 +10,23 @@ namespace Ns1DnsPlugin;
 public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
 {
     private const string ApiBase = "https://api.nsone.net/v1";
-    private static readonly HttpClient HttpClient = new()
+    private static readonly HttpClient SharedHttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(30)
     };
+
+    private readonly HttpClient _httpClient;
+
+    public Ns1DnsValidationPlugin()
+        : this(SharedHttpClient)
+    {
+    }
+
+    public Ns1DnsValidationPlugin(HttpClient httpClient)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
+    }
 
     public DnsPluginMetadata Metadata => new()
     {
@@ -86,9 +99,13 @@ public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
             payload,
             cancellationToken).ConfigureAwait(false);
 
-        if (status is >= 200 and < 300 &&
-            (body.Contains(recordName, StringComparison.OrdinalIgnoreCase) ||
-             body.Contains("\"answers\"", StringComparison.Ordinal)))
+        if (status is >= 200 and < 300)
+        {
+            return;
+        }
+
+        if (body.Contains("already exists", StringComparison.OrdinalIgnoreCase) ||
+            body.Contains("record already exists", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -127,12 +144,12 @@ public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
                 content: null,
                 cancellationToken).ConfigureAwait(false);
 
-            if (status is not (200 or 204 or 404) && status is < 200 or >= 300)
+            if (status is >= 200 and < 300 || status is 404)
             {
-                throw new InvalidOperationException($"NS1 delete TXT failed ({status}): {TrimBody(body)}");
+                return;
             }
 
-            return;
+            throw new InvalidOperationException($"NS1 delete TXT failed ({status}): {TrimBody(body)}");
         }
 
         var payload = JsonSerializer.Serialize(new
@@ -151,13 +168,15 @@ public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
             payload,
             cancellationToken).ConfigureAwait(false);
 
-        if (updateStatus is < 200 or >= 300)
+        if (updateStatus is >= 200 and < 300)
         {
-            throw new InvalidOperationException($"NS1 update TXT failed ({updateStatus}): {TrimBody(updateBody)}");
+            return;
         }
+
+        throw new InvalidOperationException($"NS1 update TXT failed ({updateStatus}): {TrimBody(updateBody)}");
     }
 
-    private static async Task<string> ResolveZoneAsync(
+    private async Task<string> ResolveZoneAsync(
         string apiKey,
         string recordName,
         CancellationToken cancellationToken)
@@ -208,7 +227,7 @@ public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
         throw new InvalidOperationException($"NS1 could not find a DNS zone for '{recordName}'.");
     }
 
-    private static async Task<List<string>?> GetTxtAnswersAsync(
+    private async Task<List<string>?> GetTxtAnswersAsync(
         string apiKey,
         string zone,
         string recordName,
@@ -258,7 +277,7 @@ public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
         return values;
     }
 
-    private static async Task<(int Status, string Body)> SendAsync(
+    private async Task<(int Status, string Body)> SendAsync(
         HttpMethod method,
         string url,
         string apiKey,
@@ -274,7 +293,7 @@ public sealed class Ns1DnsValidationPlugin : IDnsValidationPlugin
             request.Content = new StringContent(content, Encoding.UTF8, "application/json");
         }
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return ((int)response.StatusCode, body);
     }

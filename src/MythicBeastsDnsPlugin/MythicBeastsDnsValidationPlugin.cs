@@ -11,10 +11,23 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
 {
     private const string ApiBase = "https://api.mythic-beasts.com/dns/v2/zones";
     private const string AuthUrl = "https://auth.mythic-beasts.com/login";
-    private static readonly HttpClient HttpClient = new()
+    private static readonly HttpClient SharedHttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(30)
     };
+
+    private readonly HttpClient _httpClient;
+
+    public MythicBeastsDnsValidationPlugin()
+        : this(SharedHttpClient)
+    {
+    }
+
+    public MythicBeastsDnsValidationPlugin(HttpClient httpClient)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
+    }
 
     public DnsPluginMetadata Metadata => new()
     {
@@ -73,9 +86,14 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
             request.TxtValue,
             cancellationToken).ConfigureAwait(false);
 
-        if (status is >= 200 and < 300 &&
-            (body.Contains("records added", StringComparison.OrdinalIgnoreCase) ||
-             body.Contains("records_added", StringComparison.OrdinalIgnoreCase)))
+        if (status is >= 200 and < 300)
+        {
+            return;
+        }
+
+        if (body.Contains("records added", StringComparison.OrdinalIgnoreCase) ||
+            body.Contains("records_added", StringComparison.OrdinalIgnoreCase) ||
+            body.Contains("already exists", StringComparison.OrdinalIgnoreCase))
         {
             return;
         }
@@ -108,20 +126,22 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
             request.TxtValue,
             cancellationToken).ConfigureAwait(false);
 
-        if (status is 200 or 204 or 404 ||
-            body.Contains("records removed", StringComparison.OrdinalIgnoreCase) ||
-            body.Contains("records_removed", StringComparison.OrdinalIgnoreCase))
+        if (status is >= 200 and < 300 || status is 404)
         {
             return;
         }
 
-        if (status is < 200 or >= 300)
+        if (body.Contains("records removed", StringComparison.OrdinalIgnoreCase) ||
+            body.Contains("records_removed", StringComparison.OrdinalIgnoreCase) ||
+            body.Contains("not found", StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Mythic Beasts delete TXT failed ({status}): {TrimBody(body)}");
+            return;
         }
+
+        throw new InvalidOperationException($"Mythic Beasts delete TXT failed ({status}): {TrimBody(body)}");
     }
 
-    private static async Task<string> GetAccessTokenAsync(
+    private async Task<string> GetAccessTokenAsync(
         IReadOnlyDictionary<string, string> credentials,
         CancellationToken cancellationToken)
     {
@@ -138,7 +158,7 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
             ["grant_type"] = "client_credentials"
         });
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         if ((int)response.StatusCode is < 200 or >= 300)
         {
@@ -157,7 +177,7 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
         return accessToken;
     }
 
-    private static async Task<string> ResolveZoneAsync(
+    private async Task<string> ResolveZoneAsync(
         string accessToken,
         string recordName,
         CancellationToken cancellationToken)
@@ -208,7 +228,7 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
         throw new InvalidOperationException($"Mythic Beasts could not find a DNS zone for '{recordName}'.");
     }
 
-    private static async Task<HashSet<string>?> TryListZonesAsync(string accessToken, CancellationToken cancellationToken)
+    private async Task<HashSet<string>?> TryListZonesAsync(string accessToken, CancellationToken cancellationToken)
     {
         var (status, body) = await SendAsync(HttpMethod.Get, ApiBase, accessToken, cancellationToken).ConfigureAwait(false);
         if (status is 401)
@@ -249,7 +269,7 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
         }
     }
 
-    private static async Task<bool> HasTxtAsync(
+    private async Task<bool> HasTxtAsync(
         string accessToken,
         string zone,
         string relativeName,
@@ -301,7 +321,7 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
         return false;
     }
 
-    private static async Task<(int Status, string Body)> SendFormAsync(
+    private async Task<(int Status, string Body)> SendFormAsync(
         HttpMethod method,
         string url,
         string accessToken,
@@ -317,12 +337,12 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
             ["data"] = txtValue
         });
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return ((int)response.StatusCode, body);
     }
 
-    private static async Task<(int Status, string Body)> SendAsync(
+    private async Task<(int Status, string Body)> SendAsync(
         HttpMethod method,
         string url,
         string accessToken,
@@ -333,7 +353,7 @@ public sealed class MythicBeastsDnsValidationPlugin : IDnsValidationPlugin
         request.Headers.TryAddWithoutValidation("Accept", "application/json");
         request.Headers.TryAddWithoutValidation("User-Agent", "ACMECertManager-MythicBeastsDnsPlugin");
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return ((int)response.StatusCode, body);
     }

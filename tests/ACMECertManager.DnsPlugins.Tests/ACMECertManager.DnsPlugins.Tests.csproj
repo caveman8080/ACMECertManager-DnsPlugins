@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Plugin types are [SupportedOSPlatform("windows")]; these tests only exercise HttpClient logic. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!-- Plugin assemblies target net10.0-windows through the WPF host. Compile the host contract plus plugin sources so testhost does not require WindowsDesktop. -->
+  <ItemGroup>
+    <Compile Include="..\..\ACMECertManager\src\DnsPlugins.cs" Link="Host\DnsPlugins.cs" />
+    <Compile Include="..\..\src\DreamHostDnsPlugin\DreamHostDnsValidationPlugin.cs" Link="Plugins\DreamHostDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\EasyDnsDnsPlugin\EasyDnsDnsValidationPlugin.cs" Link="Plugins\EasyDnsDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\InfomaniakDnsPlugin\InfomaniakDnsValidationPlugin.cs" Link="Plugins\InfomaniakDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\MythicBeastsDnsPlugin\MythicBeastsDnsValidationPlugin.cs" Link="Plugins\MythicBeastsDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\Ns1DnsPlugin\Ns1DnsValidationPlugin.cs" Link="Plugins\Ns1DnsValidationPlugin.cs" />
+  </ItemGroup>
+
+</Project>

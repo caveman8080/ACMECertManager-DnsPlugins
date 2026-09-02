@@ -58,6 +58,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyDnsDnsPlugin", "src\Eas
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MythicBeastsDnsPlugin", "src\MythicBeastsDnsPlugin\MythicBeastsDnsPlugin.csproj", "{9C3D75CA-F4B6-468E-A7AB-B506D3AE47F9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A0F1E2D3-C4B5-4A69-8E7D-6C5B4A392817}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ACMECertManager.DnsPlugins.Tests", "tests\ACMECertManager.DnsPlugins.Tests\ACMECertManager.DnsPlugins.Tests.csproj", "{B1A2C3D4-E5F6-4789-ABCD-112233445566}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -172,6 +176,10 @@ Global
 		{9C3D75CA-F4B6-468E-A7AB-B506D3AE47F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C3D75CA-F4B6-468E-A7AB-B506D3AE47F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C3D75CA-F4B6-468E-A7AB-B506D3AE47F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1A2C3D4-E5F6-4789-ABCD-112233445566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1A2C3D4-E5F6-4789-ABCD-112233445566}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1A2C3D4-E5F6-4789-ABCD-112233445566}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1A2C3D4-E5F6-4789-ABCD-112233445566}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -204,6 +212,7 @@ Global
 		{7A1B53A8-D294-446C-858F-93E4B18C25D7} = {1B2C3D4E-5F6A-7B8C-9D0E-1F2A3B4C5D6E}
 		{8B2C64B9-E3A5-457D-969A-A4F5C29D36E8} = {1B2C3D4E-5F6A-7B8C-9D0E-1F2A3B4C5D6E}
 		{9C3D75CA-F4B6-468E-A7AB-B506D3AE47F9} = {1B2C3D4E-5F6A-7B8C-9D0E-1F2A3B4C5D6E}
+		{B1A2C3D4-E5F6-4789-ABCD-112233445566} = {A0F1E2D3-C4B5-4A69-8E7D-6C5B4A392817}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C4D8E2F1-9A3B-4C6D-8E1F-2A5B7C9D0E3F}

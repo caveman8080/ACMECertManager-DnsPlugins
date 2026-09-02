@@ -10,10 +10,23 @@ namespace InfomaniakDnsPlugin;
 public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
 {
     private const string ApiBase = "https://api.infomaniak.com";
-    private static readonly HttpClient HttpClient = new()
+    private static readonly HttpClient SharedHttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(30)
     };
+
+    private readonly HttpClient _httpClient;
+
+    public InfomaniakDnsValidationPlugin()
+        : this(SharedHttpClient)
+    {
+    }
+
+    public InfomaniakDnsValidationPlugin(HttpClient httpClient)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
+    }
 
     public DnsPluginMetadata Metadata => new()
     {
@@ -73,7 +86,7 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
             payload,
             cancellationToken).ConfigureAwait(false);
 
-        if (IsSuccessResult(body) ||
+        if (status is >= 200 and < 300 ||
             body.Contains("already", StringComparison.OrdinalIgnoreCase))
         {
             return;
@@ -104,18 +117,15 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
             content: null,
             cancellationToken).ConfigureAwait(false);
 
-        if (status is 200 or 204 or 404 || IsSuccessResult(body))
+        if (status is >= 200 and < 300 || status is 404)
         {
             return;
         }
 
-        if (status is < 200 or >= 300)
-        {
-            throw new InvalidOperationException($"Infomaniak delete TXT failed ({status}): {TrimBody(body)}");
-        }
+        throw new InvalidOperationException($"Infomaniak delete TXT failed ({status}): {TrimBody(body)}");
     }
 
-    private static async Task<string> ResolveZoneAsync(
+    private async Task<string> ResolveZoneAsync(
         string token,
         string recordName,
         CancellationToken cancellationToken)
@@ -141,7 +151,9 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
                 content: null,
                 cancellationToken).ConfigureAwait(false);
 
-            if (status is >= 200 and < 300 && IsSuccessResult(body))
+            ThrowIfAuthFailed(status, body);
+
+            if (status is >= 200 and < 300)
             {
                 return candidate;
             }
@@ -150,7 +162,7 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
         throw new InvalidOperationException($"Infomaniak could not find a DNS zone for '{recordName}'.");
     }
 
-    private static async Task<string?> TryGetZoneFqdnAsync(
+    private async Task<string?> TryGetZoneFqdnAsync(
         string token,
         string domain,
         CancellationToken cancellationToken)
@@ -162,7 +174,9 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
             content: null,
             cancellationToken).ConfigureAwait(false);
 
-        if (status is < 200 or >= 300 || !IsSuccessResult(body))
+        ThrowIfAuthFailed(status, body);
+
+        if (status is < 200 or >= 300)
         {
             return null;
         }
@@ -179,7 +193,7 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
         }
     }
 
-    private static async Task<string?> FindRecordIdAsync(
+    private async Task<string?> FindRecordIdAsync(
         string token,
         string zone,
         string relativeName,
@@ -308,7 +322,7 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
         return null;
     }
 
-    private static async Task<(int Status, string Body)> SendAsync(
+    private async Task<(int Status, string Body)> SendAsync(
         HttpMethod method,
         string url,
         string token,
@@ -324,14 +338,19 @@ public sealed class InfomaniakDnsValidationPlugin : IDnsValidationPlugin
             request.Content = new StringContent(content, Encoding.UTF8, "application/json");
         }
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return ((int)response.StatusCode, body);
     }
 
-    private static bool IsSuccessResult(string body) =>
-        body.Contains("\"result\":\"success\"", StringComparison.OrdinalIgnoreCase) ||
-        body.Contains("\"result\": \"success\"", StringComparison.OrdinalIgnoreCase);
+    private static void ThrowIfAuthFailed(int status, string body)
+    {
+        if (status is 401 or 403)
+        {
+            throw new InvalidOperationException(
+                $"Infomaniak authentication/authorization failed ({status}): {TrimBody(body)}");
+        }
+    }
 
     private static string? ReadString(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) ? value.GetString() : null;

@@ -10,10 +10,23 @@ namespace EasyDnsDnsPlugin;
 public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
 {
     private const string ApiBase = "https://rest.easydns.net";
-    private static readonly HttpClient HttpClient = new()
+    private static readonly HttpClient SharedHttpClient = new()
     {
         Timeout = TimeSpan.FromSeconds(30)
     };
+
+    private readonly HttpClient _httpClient;
+
+    public EasyDnsDnsValidationPlugin()
+        : this(SharedHttpClient)
+    {
+    }
+
+    public EasyDnsDnsValidationPlugin(HttpClient httpClient)
+    {
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _httpClient = httpClient;
+    }
 
     public DnsPluginMetadata Metadata => new()
     {
@@ -125,7 +138,7 @@ public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
         }
     }
 
-    private static async Task<string> ResolveZoneAsync(
+    private async Task<string> ResolveZoneAsync(
         string token,
         string apiKey,
         string recordName,
@@ -140,6 +153,8 @@ public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
                 apiKey,
                 content: null,
                 cancellationToken).ConfigureAwait(false);
+
+            ThrowIfAuthFailed(status, body);
 
             if (status is 404)
             {
@@ -165,7 +180,7 @@ public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
         throw new InvalidOperationException($"EasyDNS could not find a DNS zone for '{recordName}'.");
     }
 
-    private static async Task<string?> FindRecordIdAsync(
+    private async Task<string?> FindRecordIdAsync(
         string token,
         string apiKey,
         string zone,
@@ -222,7 +237,7 @@ public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
         return null;
     }
 
-    private static async Task<(int Status, string Body)> SendAsync(
+    private async Task<(int Status, string Body)> SendAsync(
         HttpMethod method,
         string url,
         string token,
@@ -240,9 +255,18 @@ public sealed class EasyDnsDnsValidationPlugin : IDnsValidationPlugin
             request.Content = new StringContent(content, Encoding.UTF8, "application/json");
         }
 
-        using var response = await HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return ((int)response.StatusCode, body);
+    }
+
+    private static void ThrowIfAuthFailed(int status, string body)
+    {
+        if (status is 401 or 403 || HasStatus(body, 401) || HasStatus(body, 403))
+        {
+            throw new InvalidOperationException(
+                $"EasyDNS authentication/authorization failed ({status}): {TrimBody(body)}");
+        }
     }
 
     private static bool HasStatus(string body, int expected) =>
