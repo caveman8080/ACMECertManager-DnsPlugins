@@ -72,12 +72,9 @@ public sealed class IonosDnsValidationPlugin : IDnsValidationPlugin
                 name = recordName,
                 type = "TXT",
                 content = request.TxtValue,
-                ttl = 60,
-                prio = 10,
-                disabled = false
+                ttl = 60
             }
         });
-
         var (status, body) = await SendAsync(
             HttpMethod.Post,
             $"{ApiBase}/{Uri.EscapeDataString(zone.Id)}/records",
