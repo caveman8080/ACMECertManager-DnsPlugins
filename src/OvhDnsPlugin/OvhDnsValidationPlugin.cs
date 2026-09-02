@@ -54,7 +54,7 @@ public sealed class OvhDnsValidationPlugin : IDnsValidationPlugin
             Label = "API endpoint",
             IsRequired = false,
             IsSecret = false,
-            Placeholder = "Optional, default ovh-eu (ovh-us, ovh-ca, kimsufi-eu, soyoustart-eu, or a full API URL)"
+            Placeholder = "Optional, default ovh-eu (ovh-us, ovh-ca, kimsufi-eu, kimsufi-ca, soyoustart-eu, soyoustart-ca, or a full API URL)"
         },
         new DnsCredentialField
         {
