@@ -44,11 +44,22 @@ internal static class HttpStub
             Content = new StringContent(body, Encoding.UTF8, "application/json")
         };
 
+    public static HttpResponseMessage Xml(HttpStatusCode status, string body) =>
+        new(status)
+        {
+            Content = new StringContent(body, Encoding.UTF8, "text/xml")
+        };
+
     public static string Path(HttpRequestMessage request) =>
         request.RequestUri?.AbsolutePath ?? string.Empty;
 
     public static string Url(HttpRequestMessage request) =>
         request.RequestUri?.ToString() ?? string.Empty;
+
+    public static string Body(HttpRequestMessage request) =>
+        request.Content is null
+            ? string.Empty
+            : request.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
     public static void AssertAuthFailure(InvalidOperationException ex)
     {
