@@ -43,6 +43,11 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 - [DreamHost](docs/dreamhost.md)
 - [EasyDNS](docs/easydns.md)
 - [Mythic Beasts](docs/mythic-beasts.md)
+- [netcup](docs/netcup.md)
+- [INWX](docs/inwx.md)
+- [NameSilo](docs/namesilo.md)
+- [Loopia](docs/loopia.md)
+- [Selectel](docs/selectel.md)
 
 These plugins talk to each provider over HTTP. AWS Route53, Azure DNS, and Google Cloud DNS are out of scope (they need official SDKs).
 

@@ -25,8 +25,13 @@
     <Compile Include="..\..\src\DreamHostDnsPlugin\DreamHostDnsValidationPlugin.cs" Link="Plugins\DreamHostDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\EasyDnsDnsPlugin\EasyDnsDnsValidationPlugin.cs" Link="Plugins\EasyDnsDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\InfomaniakDnsPlugin\InfomaniakDnsValidationPlugin.cs" Link="Plugins\InfomaniakDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\InwxDnsPlugin\InwxDnsValidationPlugin.cs" Link="Plugins\InwxDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\LoopiaDnsPlugin\LoopiaDnsValidationPlugin.cs" Link="Plugins\LoopiaDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\MythicBeastsDnsPlugin\MythicBeastsDnsValidationPlugin.cs" Link="Plugins\MythicBeastsDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\NameSiloDnsPlugin\NameSiloDnsValidationPlugin.cs" Link="Plugins\NameSiloDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\NetcupDnsPlugin\NetcupDnsValidationPlugin.cs" Link="Plugins\NetcupDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\Ns1DnsPlugin\Ns1DnsValidationPlugin.cs" Link="Plugins\Ns1DnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\SelectelDnsPlugin\SelectelDnsValidationPlugin.cs" Link="Plugins\SelectelDnsValidationPlugin.cs" />
   </ItemGroup>
 
 </Project>
