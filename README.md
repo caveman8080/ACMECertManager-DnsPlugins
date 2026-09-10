@@ -48,6 +48,7 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 - [NameSilo](docs/namesilo.md)
 - [Loopia](docs/loopia.md)
 - [Selectel](docs/selectel.md)
+- [Exoscale DNS](docs/exoscale.md)
 
 These plugins talk to each provider over HTTP. AWS Route53, Azure DNS, and Google Cloud DNS are out of scope (they need official SDKs).
 
