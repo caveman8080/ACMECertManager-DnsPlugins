@@ -24,6 +24,7 @@
     <Compile Include="..\..\ACMECertManager\src\DnsPlugins.cs" Link="Host\DnsPlugins.cs" />
     <Compile Include="..\..\src\DreamHostDnsPlugin\DreamHostDnsValidationPlugin.cs" Link="Plugins\DreamHostDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\EasyDnsDnsPlugin\EasyDnsDnsValidationPlugin.cs" Link="Plugins\EasyDnsDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\ExoscaleDnsPlugin\ExoscaleDnsValidationPlugin.cs" Link="Plugins\ExoscaleDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\InfomaniakDnsPlugin\InfomaniakDnsValidationPlugin.cs" Link="Plugins\InfomaniakDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\InwxDnsPlugin\InwxDnsValidationPlugin.cs" Link="Plugins\InwxDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\LoopiaDnsPlugin\LoopiaDnsValidationPlugin.cs" Link="Plugins\LoopiaDnsValidationPlugin.cs" />

@@ -48,6 +48,7 @@ Do not copy `acm.exe` or other host files into `plugins/`. Each release zip cont
 - [NameSilo](docs/namesilo.md)
 - [Loopia](docs/loopia.md)
 - [Selectel](docs/selectel.md)
+- [Exoscale DNS](docs/exoscale.md)
 - [Njalla](docs/njalla.md)
 - [TransIP](docs/transip.md)
 - [PowerDNS](docs/powerdns.md)
