@@ -31,6 +31,7 @@
     <Compile Include="..\..\src\NameSiloDnsPlugin\NameSiloDnsValidationPlugin.cs" Link="Plugins\NameSiloDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\NetcupDnsPlugin\NetcupDnsValidationPlugin.cs" Link="Plugins\NetcupDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\Ns1DnsPlugin\Ns1DnsValidationPlugin.cs" Link="Plugins\Ns1DnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\PowerDnsDnsPlugin\PowerDnsDnsValidationPlugin.cs" Link="Plugins\PowerDnsDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\SelectelDnsPlugin\SelectelDnsValidationPlugin.cs" Link="Plugins\SelectelDnsValidationPlugin.cs" />
   </ItemGroup>
 
