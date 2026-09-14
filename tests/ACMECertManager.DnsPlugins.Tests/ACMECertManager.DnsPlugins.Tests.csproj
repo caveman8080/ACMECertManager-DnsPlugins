@@ -37,6 +37,12 @@
     <Compile Include="..\..\src\SelectelDnsPlugin\SelectelDnsValidationPlugin.cs" Link="Plugins\SelectelDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\HostingDeDnsPlugin\HostingDeDnsValidationPlugin.cs" Link="Plugins\HostingDeDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\TransIpDnsPlugin\TransIpDnsValidationPlugin.cs" Link="Plugins\TransIpDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\SpaceshipDnsPlugin\SpaceshipDnsValidationPlugin.cs" Link="Plugins\SpaceshipDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\NoIpDnsPlugin\NoIpDnsValidationPlugin.cs" Link="Plugins\NoIpDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\DnsExitDnsPlugin\DnsExitDnsValidationPlugin.cs" Link="Plugins\DnsExitDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\AliyunDnsPlugin\AliyunDnsValidationPlugin.cs" Link="Plugins\AliyunDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\HostingerDnsPlugin\HostingerDnsValidationPlugin.cs" Link="Plugins\HostingerDnsValidationPlugin.cs" />
+    <Compile Include="..\..\src\StratoDnsPlugin\StratoDnsValidationPlugin.cs" Link="Plugins\StratoDnsValidationPlugin.cs" />
   </ItemGroup>
 
 </Project>
