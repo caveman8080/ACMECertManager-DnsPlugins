@@ -3,15 +3,13 @@
 In-app name: **Strato**  
 Release zip: `StratoDnsPlugin.zip` ([v1](https://github.com/caveman8080/ACMECertManager-DnsPlugins/releases/tag/v1))
 
-Strato has no public DNS REST API. This plugin follows the same CustomerService portal endpoints used by `strato-certbot` / the unmerged acme.sh `dns_strato.sh` work:
+Strato has **no public DNS REST API**. This plugin drives the CustomerService portal HTML used by `strato-certbot` / the unmerged acme.sh `dns_strato.sh` work. **The portal is not a stable contract** — if Strato changes login or DNS forms, the plugin will need an update.
 
-- `https://www.strato.de/apps/CustomerService` (override with `portalUrl` for `.nl` / `.uk`)
+- Portal: `https://www.strato.de/apps/CustomerService` (override with `portalUrl` for `.nl` / `.uk`)
 - Login with customer number + password (`action_customer_login.x`); optional TOTP (`totpSecret`, `totpDeviceName`)
 - Session cookie + `sessionID` query parameter
 - List TXT/CNAME: `node=ManageDomains` and `action_show_txt_records`
 - Present/cleanup: POST `action_change_txt_records` with the full prefix/type/value list
-
-The portal HTML is not a stable contract. If Strato changes the login or DNS forms, this plugin will need an update.
 
 Credentials:
 
