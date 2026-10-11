@@ -23,7 +23,7 @@ jobs:
     - name: Check out plugin archive
       uses: actions/checkout@v7
 
-    - name: Check out ACMECertManager (IDnsValidationPlugin host)
+    - name: Check out ACMECertManager (ACMECertManager.Core, IDnsValidationPlugin host)
       uses: actions/checkout@v7
       with:
         repository: caveman8080/ACMECertManager
@@ -56,7 +56,7 @@ jobs:
           $archive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
           try {
             $entryNames = @($archive.Entries | ForEach-Object { $_.Name })
-            if ($entryNames -contains "acm.exe" -or $entryNames -contains "acm.dll") {
+            if ($entryNames -contains "acm.exe" -or $entryNames -contains "acm.dll" -or $entryNames -contains "ACMECertManager.Core.dll") {
               throw "Zip $zipName unexpectedly contains the host assembly."
             }
             if ($entryNames -notcontains $PluginDllName) {
@@ -98,7 +98,7 @@ jobs:
           Copy-Item -Path $dll -Destination $stagedDll
 
           $forbidden = @(Get-ChildItem -Path $stage -File | Where-Object {
-            $_.Name -ieq "acm.exe" -or $_.Name -ieq "acm.dll"
+            $_.Name -ieq "acm.exe" -or $_.Name -ieq "acm.dll" -or $_.Name -ieq "ACMECertManager.Core.dll"
           })
           if ($forbidden.Count -gt 0) {
             throw "Refusing to pack host assembly: $($forbidden.Name -join ', ')"
@@ -151,11 +151,11 @@ jobs:
         $tag = "v1"
         $title = "Contract 1 plugins"
         $notes = @'
-        **Plugin contract:** 1 (`IDnsValidationPlugin` as defined on ACMECertManager `main`).
+        **Plugin contract:** 1 (`IDnsValidationPlugin` as defined in `ACMECertManager.Core` on ACMECertManager `main`). Requires ACMECertManager v1.5.0 or later.
 
         Download `<PluginName>.zip` for the DNS provider you use (overwritten on each publish). Extract the plugin DLL into `ACMECertManager/plugins/` (beside `acm.exe`) and restart ACMECertManager.
 
-        Do not copy `acm.exe` or other host files into `plugins/`. Each zip contains only that plugin's DLL.
+        Do not copy `acm.exe`, `ACMECertManager.Core.dll`, or other host files into `plugins/`. Each zip contains only that plugin's DLL.
 
         Provider setup: [docs/](https://github.com/caveman8080/ACMECertManager-DnsPlugins/tree/main/docs).
         **Host app:** https://github.com/caveman8080/ACMECertManager
