@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ACMECertManager\src\ACMECertManager.csproj" />
+    <ProjectReference Include="..\..\ACMECertManager\src\ACMECertManager.Core\ACMECertManager.Core.csproj">
+      <!-- Contract types come from the app's own ACMECertManager.Core.dll at runtime; never bundle a copy. -->
+      <Private>false</Private>
+    </ProjectReference>
   </ItemGroup>
 </Project>

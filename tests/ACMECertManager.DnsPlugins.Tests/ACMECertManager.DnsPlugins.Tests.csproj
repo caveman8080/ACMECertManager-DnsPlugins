@@ -21,7 +21,7 @@
 
   <!-- Plugin assemblies target net10.0-windows through the WPF host. Compile the host contract plus plugin sources so testhost does not require WindowsDesktop. -->
   <ItemGroup>
-    <Compile Include="..\..\ACMECertManager\src\DnsPlugins.cs" Link="Host\DnsPlugins.cs" />
+    <Compile Include="..\..\ACMECertManager\src\ACMECertManager.Core\DnsPlugins.cs" Link="Host\DnsPlugins.cs" />
     <Compile Include="..\..\src\DreamHostDnsPlugin\DreamHostDnsValidationPlugin.cs" Link="Plugins\DreamHostDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\EasyDnsDnsPlugin\EasyDnsDnsValidationPlugin.cs" Link="Plugins\EasyDnsDnsValidationPlugin.cs" />
     <Compile Include="..\..\src\ExoscaleDnsPlugin\ExoscaleDnsValidationPlugin.cs" Link="Plugins\ExoscaleDnsValidationPlugin.cs" />

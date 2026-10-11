@@ -12,7 +12,7 @@ ACMECertManager loads provider DLLs from `plugins/` next to `acm.exe`. This repo
 4. Restart ACMECertManager.
 5. Issue a certificate with **DNS-01 (plugin)** and select the provider.
 
-Do not copy `acm.exe` or other host files into `plugins/`. Each release zip contains only that plugin's DLL.
+Do not copy `acm.exe`, `ACMECertManager.Core.dll`, or other host files into `plugins/`. Each release zip contains only that plugin's DLL.
 
 ## Plugins
 
@@ -68,7 +68,9 @@ Missing a DNS provider? Open a [plugin request](https://github.com/caveman8080/A
 
 ## Plugin contract
 
-ACMECertManager discovers plugins with `typeof(IDnsValidationPlugin).IsAssignableFrom` on `*.dll` files in `plugins/`. That type lives in the **app assembly** (`src/DnsPlugins.cs`, namespace `ACMECertManager`). A second copy of the interface in a plugin assembly will not load.
+ACMECertManager discovers plugins with `typeof(IDnsValidationPlugin).IsAssignableFrom` on `*.dll` files in `plugins/`. That type lives in **`ACMECertManager.Core.dll`** (`src/ACMECertManager.Core/DnsPlugins.cs`, namespace `ACMECertManager`), which ships next to `acm.exe`. A second copy of the interface in a plugin assembly will not load.
+
+**Requires ACMECertManager v1.5.0 or later.** Plugins built before v1.5.0 referenced the interface inside `acm.exe` and no longer load in v1.5.x; re-download them from the `v1` release. Plugins built from this repo now reference `ACMECertManager.Core` and will not load in ACMECertManager v1.4.x or earlier.
 
 **Contract 1** is the current ACMECertManager `main` interface:
 
@@ -88,15 +90,15 @@ public interface IDnsValidationPlugin
 }
 ```
 
-Related contract types (same assembly): `DnsPluginMetadata`, `DnsCredentialField`, `DnsChallengeRequest`.
+Related contract types (same assembly, `ACMECertManager.Core`): `DnsPluginMetadata`, `DnsCredentialField`, `DnsChallengeRequest`.
 
-Plugins in this repo **ProjectReference** `ACMECertManager/src/ACMECertManager.csproj`. They do not redefine `IDnsValidationPlugin`.
+Plugins in this repo **ProjectReference** `ACMECertManager/src/ACMECertManager.Core/ACMECertManager.Core.csproj` (with `Private=false`, so the app's copy is used at runtime). They do not redefine `IDnsValidationPlugin`.
 
 If the host interface changes in a breaking way, this archive will document a new contract version.
 
 ## Build from source
 
-Plugins compile against the real `IDnsValidationPlugin` type in ACMECertManager. Clone the app next to this tree (or add it as a submodule) so `ACMECertManager/src/ACMECertManager.csproj` exists.
+Plugins compile against the real `IDnsValidationPlugin` type in ACMECertManager. Clone the app next to this tree (or add it as a submodule) so `ACMECertManager/src/ACMECertManager.Core/ACMECertManager.Core.csproj` exists.
 
 **Clone both** (app checkout inside this repo — same layout CI uses):
 
@@ -124,7 +126,7 @@ git submodule add https://github.com/caveman8080/ACMECertManager.git ACMECertMan
 dotnet build ACMECertManager.DnsPlugins.sln -c Release
 ```
 
-Minimum SDK/runtime: .NET 10 (`net10.0-windows`). After a Release build, copy each `src/<Name>DnsPlugin/bin/Release/net10.0-windows/<Name>DnsPlugin.dll` into `plugins/`. Do not copy `acm.exe`.
+Minimum SDK/runtime: .NET 10 (`net10.0-windows`). After a Release build, copy each `src/<Name>DnsPlugin/bin/Release/net10.0-windows/<Name>DnsPlugin.dll` into `plugins/`. Do not copy `acm.exe` or `ACMECertManager.Core.dll`.
 
 ## Releases
 
